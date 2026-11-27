@@ -1,0 +1,22 @@
+name: validate-design
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate source of truth
+        run: python3 tools/validate.py
+      - name: Generated configs are current
+        run: python3 tools/render.py --check
+      - name: IP plan document is current
+        run: python3 tools/ipplan.py --check
+      - name: Unit tests
+        run: python3 -m unittest discover -s tests -v

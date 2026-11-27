@@ -1,0 +1,103 @@
+{
+  "_comment": "Single source of truth for the NorthBridge Technologies (fictional) network. tools/render.py builds every device config from this file and tools/validate.py checks it. All addresses are RFC 1918 or RFC 5737 documentation ranges.",
+  "organization": "NorthBridge Technologies (fictional)",
+  "domain": "corp.northbridge.example",
+  "services": {
+    "dns": ["10.10.50.10", "10.10.50.11"],
+    "dhcp": "10.10.50.10",
+    "ntp": "10.10.50.50",
+    "syslog": "10.10.50.50",
+    "snmp_manager": "10.10.50.50",
+    "radius": "10.10.50.12"
+  },
+  "sites": {
+    "hq": {
+      "name": "Head office, 3 floors, about 120 staff",
+      "supernet": "10.10.0.0/16",
+      "vlans": [
+        {"id": 10,  "name": "MGMT",        "subnet": "10.10.10.0/24", "hsrp_active": "CORE1", "purpose": "Switch, AP, WLC and server out-of-band management"},
+        {"id": 20,  "name": "ADMIN-HR",    "subnet": "10.10.20.0/24", "hsrp_active": "CORE1", "purpose": "Administration, finance and HR workstations"},
+        {"id": 25,  "name": "IT-OPS",      "subnet": "10.10.25.0/26", "hsrp_active": "CORE2", "purpose": "IT staff; the only user VLAN allowed to reach MGMT"},
+        {"id": 30,  "name": "SALES",       "subnet": "10.10.30.0/24", "hsrp_active": "CORE2", "purpose": "Sales and account management"},
+        {"id": 40,  "name": "ENGINEERING", "subnet": "10.10.40.0/23", "hsrp_active": "CORE1", "purpose": "Developers and consultants (largest group, /23)"},
+        {"id": 50,  "name": "SERVERS",     "subnet": "10.10.50.0/26", "hsrp_active": "CORE2", "purpose": "AD DS, DNS, DHCP, file, intranet, mail, syslog/NTP"},
+        {"id": 60,  "name": "VOICE",       "subnet": "10.10.60.0/24", "hsrp_active": "CORE1", "purpose": "IP phones, QoS trusted"},
+        {"id": 70,  "name": "WIFI-CORP",   "subnet": "10.10.70.0/23", "hsrp_active": "CORE2", "purpose": "Corporate SSID, WPA2-Enterprise"},
+        {"id": 80,  "name": "WIFI-GUEST",  "subnet": "10.10.80.0/24", "hsrp_active": "CORE1", "purpose": "Guest SSID, internet only"},
+        {"id": 90,  "name": "LAB-HUB",     "subnet": "10.10.90.0/27", "hsrp_active": "CORE2", "purpose": "Training lab behind a legacy hub, internet only"}
+      ],
+      "blackhole_vlan": {"id": 999, "name": "BLACKHOLE"},
+      "acl_policy": {
+        "WIFI-GUEST": "internet-only",
+        "LAB-HUB": "internet-only",
+        "MGMT": "it-only"
+      },
+      "routed_links": [
+        {"name": "EDGE-CORE1", "subnet": "10.10.255.0/30", "a": {"device": "R-EDGE", "intf": "GigabitEthernet0/0/1", "ip": "10.10.255.1"}, "b": {"device": "CORE1", "intf": "GigabitEthernet1/0/1", "ip": "10.10.255.2"}},
+        {"name": "EDGE-CORE2", "subnet": "10.10.255.4/30", "a": {"device": "R-EDGE", "intf": "GigabitEthernet0/0/2", "ip": "10.10.255.5"}, "b": {"device": "CORE2", "intf": "GigabitEthernet1/0/1", "ip": "10.10.255.6"}}
+      ],
+      "loopbacks": {"R-EDGE": "10.10.254.1", "CORE1": "10.10.254.2", "CORE2": "10.10.254.3"},
+      "core_interlink": {"portchannel": 1, "members": ["GigabitEthernet1/0/23", "GigabitEthernet1/0/24"]},
+      "access_switches": [
+        {"name": "ACC-F1-01", "model": "Catalyst 2960-24TT-L", "mgmt_ip": "10.10.10.11", "floor": 1, "location": "Floor 1 IDF", "uplinks": {"CORE1": "GigabitEthernet0/1", "CORE2": "GigabitEthernet0/2"}, "core_ports": {"CORE1": "GigabitEthernet1/0/2", "CORE2": "GigabitEthernet1/0/2"},
+         "port_groups": [
+           {"range": "FastEthernet0/1-10",  "vlan": 20, "voice": 60, "desc": "ADMIN-HR desks"},
+           {"range": "FastEthernet0/11-20", "vlan": 30, "voice": 60, "desc": "SALES desks"},
+           {"range": "FastEthernet0/21-22", "ap": true,             "desc": "Lightweight AP (CAPWAP to WLC)"},
+           {"range": "FastEthernet0/23-24", "unused": true}
+         ]},
+        {"name": "ACC-F2-01", "model": "Catalyst 2960-24TT-L", "mgmt_ip": "10.10.10.12", "floor": 2, "location": "Floor 2 IDF", "uplinks": {"CORE1": "GigabitEthernet0/1", "CORE2": "GigabitEthernet0/2"}, "core_ports": {"CORE1": "GigabitEthernet1/0/3", "CORE2": "GigabitEthernet1/0/3"},
+         "port_groups": [
+           {"range": "FastEthernet0/1-20",  "vlan": 40, "voice": 60, "desc": "ENGINEERING desks"},
+           {"range": "FastEthernet0/21-22", "ap": true,             "desc": "Lightweight AP (CAPWAP to WLC)"},
+           {"range": "FastEthernet0/23-24", "unused": true}
+         ]},
+        {"name": "ACC-F3-01", "model": "Catalyst 2960-24TT-L", "mgmt_ip": "10.10.10.13", "floor": 3, "location": "Floor 3 IDF", "uplinks": {"CORE1": "GigabitEthernet0/1", "CORE2": "GigabitEthernet0/2"}, "core_ports": {"CORE1": "GigabitEthernet1/0/4", "CORE2": "GigabitEthernet1/0/4"},
+         "port_groups": [
+           {"range": "FastEthernet0/1-12",  "vlan": 40, "voice": 60, "desc": "ENGINEERING desks"},
+           {"range": "FastEthernet0/13-18", "vlan": 25, "voice": 60, "desc": "IT-OPS desks"},
+           {"range": "FastEthernet0/19",    "vlan": 90, "hub": true, "desc": "Uplink to training-lab hub (shared collision domain)"},
+           {"range": "FastEthernet0/20-21", "ap": true,             "desc": "Lightweight AP (CAPWAP to WLC)"},
+           {"range": "FastEthernet0/22-24", "unused": true}
+         ]},
+        {"name": "ACC-DC-01", "model": "Catalyst 2960-24TT-L", "mgmt_ip": "10.10.10.14", "floor": 1, "location": "Server room MDF, rack 2", "uplinks": {"CORE1": "GigabitEthernet0/1", "CORE2": "GigabitEthernet0/2"}, "core_ports": {"CORE1": "GigabitEthernet1/0/5", "CORE2": "GigabitEthernet1/0/5"},         "port_groups": [
+           {"range": "FastEthernet0/1-12",  "vlan": 50, "server": true, "desc": "Servers"},
+           {"range": "FastEthernet0/13",    "wlc_trunk": true, "vlans": [10, 70, 80], "desc": "WLC01 (Cisco 2504) trunk: management + both SSID VLANs"},
+           {"range": "FastEthernet0/14-17", "vlan": 10, "server": true, "desc": "Server iLO/iDRAC out-of-band management"},
+           {"range": "FastEthernet0/18-24", "unused": true}
+         ]}
+      ],
+      "servers": [
+        {"name": "DC01",   "ip": "10.10.50.10", "role": "AD DS, DNS, DHCP (primary)"},
+        {"name": "DC02",   "ip": "10.10.50.11", "role": "AD DS, DNS (secondary), DHCP failover partner"},
+        {"name": "NPS01",  "ip": "10.10.50.12", "role": "RADIUS (NPS) for WPA2-Enterprise and switch AAA"},
+        {"name": "FS01",   "ip": "10.10.50.20", "role": "File and print"},
+        {"name": "WEB01",  "ip": "10.10.50.30", "role": "Intranet (IIS)"},
+        {"name": "MAIL01", "ip": "10.10.50.40", "role": "Mail server (see email-server-lab repo)"},
+        {"name": "MON01",  "ip": "10.10.50.50", "role": "Syslog, NTP, SNMP monitoring"},
+        {"name": "WLC01",  "ip": "10.10.10.20", "role": "Wireless LAN controller (Cisco 2504)"}
+      ]
+    },
+    "branch": {
+      "name": "Branch office, single floor, about 25 staff",
+      "supernet": "10.20.0.0/16",
+      "vlans": [
+        {"id": 110, "name": "BR-MGMT",  "subnet": "10.20.10.0/24", "purpose": "Branch management"},
+        {"id": 120, "name": "BR-STAFF", "subnet": "10.20.20.0/24", "purpose": "Branch workstations"},
+        {"id": 160, "name": "BR-VOICE", "subnet": "10.20.60.0/24", "purpose": "Branch IP phones"}
+      ],
+      "router": {"name": "R-BR", "model": "ISR 4321", "lan_intf": "GigabitEthernet0/0/1", "loopback": "10.20.254.1"},
+      "switch": {"name": "SW-BR-01", "model": "Catalyst 2960-24TT-L", "mgmt_ip": "10.20.10.11", "uplink": "GigabitEthernet0/1",
+        "port_groups": [
+          {"range": "FastEthernet0/1-20",  "vlan": 120, "voice": 160, "desc": "Branch desks"},
+          {"range": "FastEthernet0/21-24", "unused": true}
+        ]}
+    }
+  },
+  "wan": {
+    "hq_public":     {"device": "R-EDGE", "intf": "GigabitEthernet0/0/0", "ip": "203.0.113.2",  "prefix": 30, "gateway": "203.0.113.1"},
+    "branch_public": {"device": "R-BR",   "intf": "GigabitEthernet0/0/0", "ip": "198.51.100.2", "prefix": 30, "gateway": "198.51.100.1"},
+    "tunnel": {"subnet": "172.16.0.0/30", "hq_ip": "172.16.0.1", "branch_ip": "172.16.0.2", "id": 0}
+  },
+  "routing": {"ospf_process": 1, "area": 0}
+}
